@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0F172A" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Baby Piano" />
+  <title>Baby Einstein Color Melody Guide</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <!-- Top Header / Controls Bar -->
+    <header class="top-bar">
+      <div class="brand-group">
+        <button id="btnSongMenu" class="song-picker-btn" aria-label="Choose Melody">
+          <span id="currentSongEmoji" class="song-emoji">⭐</span>
+          <div class="song-picker-text">
+            <span class="picker-label">MELODY</span>
+            <span id="currentSongTitle" class="picker-title">Twinkle Twinkle Little Star</span>
+          </div>
+          <span class="chevron">▼</span>
+        </button>
+      </div>
+
+      <!-- Mode Switcher (Auto Timed vs Step-by-Step) -->
+      <div class="mode-toggle" role="group" aria-label="Play Mode">
+        <button id="modeAutoBtn" class="mode-btn active" data-mode="auto" title="Auto-play colors by rhythm timing">
+          ⏱️ Auto Timed
+        </button>
+        <button id="modeStepBtn" class="mode-btn" data-mode="step" title="Wait for tap to show next color">
+          👆 Tap Step
+        </button>
+      </div>
+
+      <!-- Right Action Buttons -->
+      <div class="utility-btns">
+        <button id="btnViewStyle" class="icon-btn" title="Switch Visual Style (Spotlight + Lanes vs Big Card)">
+          <span id="viewStyleIcon">🎹</span>
+        </button>
+        <button id="btnSoundToggle" class="icon-btn" title="Helper Sound Guide (Muted by default so physical piano shines)">
+          <span id="soundToggleIcon">🔇</span>
+        </button>
+        <button id="btnColorsModal" class="icon-btn" title="Customize Key Colors to match your Baby Einstein piano">
+          🎨
+        </button>
+        <button id="btnFullscreen" class="icon-btn" title="Toggle Fullscreen">
+          ⛶
+        </button>
+      </div>
+    </header>
+
+    <!-- Transport & Speed Bar -->
+    <section class="transport-bar">
+      <div class="transport-controls">
+        <button id="btnRestart" class="transport-btn secondary" title="Restart Melody" aria-label="Restart Melody">
+          ⏮
+        </button>
+        <button id="btnPlayPause" class="transport-btn primary" title="Play or Pause" aria-label="Play or Pause">
+          <span id="playPauseIcon">▶</span>
+          <span id="playPauseText">Play</span>
+        </button>
+        <button id="btnLoop" class="transport-btn secondary active" title="Loop Melody" aria-label="Loop Melody">
+          🔁
+        </button>
+      </div>
+
+      <!-- Progress / Step Counter -->
+      <div class="progress-wrapper">
+        <div class="progress-info">
+          <span id="noteStepCounter" class="step-badge">Note 1 / 14</span>
+          <span id="lyricPreview" class="lyric-text">Press Play or tap the screen to begin!</span>
+        </div>
+        <div class="progress-track" id="progressTrack" title="Click to jump to note">
+          <div id="progressBar" class="progress-fill"></div>
+        </div>
+      </div>
+
+      <!-- Speed Selector (Visible in Auto Timed Mode) -->
+      <div id="speedControlGroup" class="speed-group">
+        <span class="speed-label">Speed:</span>
+        <button class="speed-chip" data-speed="0.5">🐢 Slow</button>
+        <button class="speed-chip active" data-speed="0.75">🐥 Kid</button>
+        <button class="speed-chip" data-speed="1">🐇 Normal</button>
+      </div>
+    </section>
+
+    <!-- Main Visual Stage (Tappable in Step Mode or to Play/Pause) -->
+    <main id="visualStage" class="visual-stage view-split">
+      <!-- Countdown Overlay -->
+      <div id="countdownOverlay" class="countdown-overlay hidden">
+        <div id="countdownNumber" class="countdown-number">3</div>
+        <div class="countdown-sub">Get ready on your Baby Einstein piano!</div>
+      </div>
+
+      <!-- Celebration Overlay -->
+      <div id="celebrationOverlay" class="celebration-overlay hidden">
+        <div class="celebration-card">
+          <div class="celebration-stars">🌟 🎉 🌟</div>
+          <h2 id="celebrationTitle">Great Job!</h2>
+          <p>You played the whole melody!</p>
+          <div class="celebration-actions">
+            <button id="btnReplaySong" class="big-action-btn">🔄 Play Again</button>
+            <button id="btnNextSong" class="big-action-btn secondary">🎵 Next Melody</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top/Center Big Active Color Beacon + Upcoming Note Sequence Ribbon -->
+      <section class="beacon-panel" id="beaconPanel">
+        <!-- Sequence Ribbon showing previous, current, and upcoming color dots -->
+        <div class="sequence-ribbon-container">
+          <div id="sequenceRibbon" class="sequence-ribbon"></div>
+        </div>
+
+        <!-- Huge Active Color Target for Toddler -->
+        <div class="active-beacon-wrapper" id="activeBeaconTapZone">
+          <div id="activeColorBeacon" class="active-color-beacon">
+            <div class="beacon-pulse-ring" id="beaconPulseRing"></div>
+            <div class="beacon-inner">
+              <span id="beaconKeyNumber" class="beacon-key-number">Key 1</span>
+              <span id="beaconColorName" class="beacon-color-name">RED</span>
+              <span id="beaconNoteLetter" class="beacon-note-letter">C</span>
+            </div>
+            <!-- Countdown ring / Beat duration bar inside beacon -->
+            <div class="beacon-duration-track">
+              <div id="beaconDurationFill" class="beacon-duration-fill"></div>
+            </div>
+          </div>
+
+          <!-- Next color preview pill -->
+          <div id="nextNotePreview" class="next-note-preview">
+            <span class="next-label">NEXT</span>
+            <div id="nextColorDot" class="next-color-dot"></div>
+            <span id="nextColorText" class="next-color-text">Red (C)</span>
+          </div>
+        </div>
+
+        <div id="stepPromptHint" class="step-prompt-hint">
+          Press matching color on your piano!
+        </div>
+      </section>
+
+      <!-- Falling Rhythm Lanes + Bottom 8-Key Alignment Guide (Matches physical piano keys underneath phone slot) -->
+      <section class="lanes-and-keys-panel" id="lanesPanel">
+        <!-- Falling Notes Canvas / DOM Lanes -->
+        <div id="fallingLanesContainer" class="falling-lanes-container">
+          <div class="lane-grid" id="laneGrid">
+            <!-- 8 vertical lanes generated by JS -->
+          </div>
+          <div id="fallingNotesLayer" class="falling-notes-layer"></div>
+        </div>
+
+        <!-- 8 Colored Key Guides at the very bottom edge of the screen -->
+        <div id="pianoGuideBar" class="piano-guide-bar" aria-label="8 Colored Piano Key Guides">
+          <!-- 8 key blocks generated by JS -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Song Picker Drawer / Modal -->
+    <div id="songModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="songModalTitle">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 id="songModalTitle">🎵 Choose a Melody</h2>
+          <button id="btnCloseSongModal" class="close-modal-btn" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <div id="songGrid" class="song-grid">
+            <!-- Populated by JS -->
+          </div>
+
+          <!-- Custom Melody Creator Section -->
+          <div class="custom-melody-box">
+            <div class="custom-header-row">
+              <h3>✨ Add or Create Your Own Color Melody</h3>
+              <div class="duration-selector" role="group" aria-label="Note Length">
+                <span class="dur-label">Beat Length:</span>
+                <button type="button" class="dur-chip" data-beats="0.5">½ Quick</button>
+                <button type="button" class="dur-chip active" data-beats="1">1 Normal</button>
+                <button type="button" class="dur-chip" data-beats="2">2 Long</button>
+              </div>
+            </div>
+            <p class="custom-help">1) Tap the colored keys below to add notes, OR paste a quick note list (like <code>C C G G A A G:2</code> or <code>Red, Red, Light Blue</code>):</p>
+            <div id="customKeyButtons" class="custom-key-picker"></div>
+
+            <div class="quick-text-import">
+              <input type="text" id="quickNotesInput" class="custom-input" placeholder="Quick paste notes: e.g. C D E C C D E C E F G:2" />
+              <button type="button" id="btnParseQuickNotes" class="small-btn secondary">＋ Add Notes from Text</button>
+            </div>
+
+            <div id="customSequencePreview" class="custom-sequence-preview">
+              <span class="empty-custom-msg">Tap colors above or paste notes to build your melody...</span>
+            </div>
+            <div class="custom-actions">
+              <input type="text" id="customSongEmojiInput" class="custom-input emoji-input" placeholder="🎵" maxlength="4" value="🎵" aria-label="Melody Emoji" />
+              <input type="text" id="customSongNameInput" class="custom-input" placeholder="Melody Name (e.g., Frère Jacques)" maxlength="36" />
+              <button type="button" id="btnClearCustom" class="small-btn secondary">Clear</button>
+              <button type="button" id="btnSavePlayCustom" class="small-btn primary">💾 Save &amp; Play</button>
+            </div>
+
+            <div class="backup-share-row">
+              <button type="button" id="btnExportSongs" class="small-btn secondary" title="Download your custom songs as a JSON file">⬇️ Export Custom Songs</button>
+              <label class="small-btn secondary import-label" title="Import custom songs from a JSON file">
+                ⬆️ Import Songs JSON
+                <input type="file" id="inputImportSongs" accept=".json,application/json" class="hidden" />
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color Customizer Modal -->
+    <div id="colorsModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="colorsModalTitle">
+      <div class="modal-sheet">
+        <div class="modal-header">
+          <h2 id="colorsModalTitle">🎨 Baby Einstein Piano Colors &amp; Settings</h2>
+          <button id="btnCloseColorsModal" class="close-modal-btn" aria-label="Close">✕</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            Different editions of the Baby Einstein &amp; Hape Magic Touch Piano have slightly different shades on keys 5–8. Pick a preset or tap any key color below to match your wooden piano!
+          </p>
+
+          <div class="preset-row">
+            <button class="preset-btn" data-preset="standard">🌈 Standard 8-Key (Red → Pink)</button>
+            <button class="preset-btn" data-preset="classic">🎹 Hape Classic (Red → Purple/White)</button>
+            <button class="preset-btn" data-preset="boomwhackers">🎵 Chroma / Boomwhackers</button>
+          </div>
+
+          <div id="colorCustomizerList" class="color-customizer-list">
+            <!-- 8 key color editors generated by JS -->
+          </div>
+
+          <div class="modal-footer-actions">
+            <button id="btnResetColors" class="small-btn secondary">Reset Default Colors</button>
+            <button id="btnDoneColors" class="small-btn primary">✓ Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
